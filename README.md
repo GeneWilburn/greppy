@@ -58,7 +58,7 @@ The text data in *textdata/* creates a very modest footprint on overall storage,
 
 The speed of the searches is gratifyingly fast.
 
-# Caveat
+## Caveat
 
 Although an attempt has been made to handle files with spaces in filenames, other metacharacters can cause problems with buildindex.pl. If at all possible, I recommend you groom a site first with [detox](https://github.com/dharple/detox) to fix filename issues before they become an issue. You can run detox in `--dry-run` mode to see which links might be affected by fixing filenames.
 
