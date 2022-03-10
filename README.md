@@ -22,7 +22,7 @@ The pdftotext utility is part of xpdf, available to Debian/Ubuntu users via 'apt
 
 ## Greppy Files
 
-The working version of Greppy uses three programs I developed for the search engine:
+The working version of Greppy uses three programs:
 
 - buildindex.pl
 - searchform.php
@@ -60,7 +60,7 @@ The speed of the searches is gratifyingly fast.
 
 ## Caveat
 
-Although an attempt has been made to handle files with spaces in filenames, other metacharacters can cause problems with buildindex.pl. If at all possible, I recommend you groom a site first with [detox](https://github.com/dharple/detox) to fix filename issues before they become an issue. You can run detox in `--dry-run` mode to see which links might be affected by fixing filenames.
+Although an attempt has been made to handle files with spaces in filenames, other metacharacters can cause problems with buildindex.pl. If at all possible, it is recommended that you groom a site first with [detox](https://github.com/dharple/detox) to fix filename issues before they become an issue. You can run detox in `--dry-run` mode to see which links might be affected by fixing filenames.
 
 ## Credits
 
