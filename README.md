@@ -34,7 +34,7 @@ The searchform.php PHP script is an HTML form for entering a search term or phra
 
 The search.php PHP script handles the invocation of grep and creates an HTML display of the results, with links back to the original documents. The search term or phrase found in the text database is highlighted in red.
 
-The search.php script checks for a line-by-line *exclude.txt* file to bypass designated private directories or files.
+The buildindex.pl script checks for a line-by-line *exclude.txt* file to bypass designated private directories or files.
 
 ## File Layout
 
