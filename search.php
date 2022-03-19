@@ -2,6 +2,23 @@
 
 # search.php
 # G. Wilburn, Feb/Mar 2022
+# gene@wilburn.ca
+
+# v1.1
+
+# search.php does a grep search on the data directory, e.g., textdata/, that
+# contains the text content created by the companion program buildindex,pl
+# 
+# It can search by wholeword matches, or partial (stem) matches and the user
+# is given the option of brief context surrounding the match, or a more extended
+# context
+#
+# Found matches are displayed in most-recently created or updated order.
+#
+# search.php uses an embedded CSS style sheet for formatting.
+#
+# search.php is called from searchform.php, a simple HTML form.
+
 
 # Check if query is empty
 if (empty($_GET['query'])) {
@@ -96,6 +113,8 @@ if ($raw == "") {
     # load results, extract filename extension, get document name,
     # separate content from embedded doc data, highlight search term in red
     $results = explode("\n", $raw);
+	# Reverse sort the results to provide most-recently-updated first
+	rsort($results);
     $lastdoc = '';
 
 	# Iterate through results, groom, and display
@@ -106,53 +125,48 @@ if ($raw == "") {
 	   	# Strip $datadir from front of $value
 	   	$value = preg_replace("/^$datadir/", "", $value);
 
-		# Get extension from metadata and remove from string
-		if ( preg_match("/^html--dot_99/i", $value) ) {
-        	$ext = substr($value, 0, 4);
-			$value = preg_replace("/^html--dot_99_/i", "../", $value);
-		} elseif ( preg_match("/^pdf--dot_99/i", $value) ) {
-        	$ext = substr($value, 0, 3);
-			$value = preg_replace("/^pdf--dot_99_/i", "../", $value);
-		}
+		# Remove timestamp from string
+		$value = preg_replace("/^.*dot_99_/", "../", $value);
 
-		# Restore slashes to path and filenames
+		# Restore slashes and dots to path and filenames
 		$line = preg_replace("/_99_/", "/", $value);
 		$line = preg_replace("/dot/", "\.", $line);
 		$line = stripslashes($line);
 
 		# Get $doc
 		# Remove colon from grep search
-		if ($pos = strpos($line, ":", 0)) {
-			$doc = substr($line, 0, $pos);
+		if ($pos = strpos($line, "txt:", 0)) {
+			$doc = substr($line, 0, $pos +3);
 		}	
 		# Remove hyphen from grep search
 		if ($pos = strpos($doc, "txt-", 0)) {
 			$doc = substr($line, 0, $pos +3);
 		}
 		
-		# Remove metadata from $line and assign $line to $content
+		# Restore original extension
 		$line = preg_replace("/^.*txt:/", "", $line);
 		$line = preg_replace("/^.*txt-/", "", $line);
+
 		$content = $line;
 
-		# Replace .txt in $doc with original file extension
-        $doc = preg_replace("/.txt/", ".$ext", $doc);
+		# Remove .txt in $doc leaving it with original file extension
+		$doc = preg_replace("/.txt/", "", $doc);
 
 		# Create hyperlink if new document
-        if (($doc != $lastdoc) && ($content != "--")) {
-        	echo "<h3><a href=\"$doc\">$doc</a></h3>";
+        if ($doc != $lastdoc) {
+        	print "<h3><a href=\"$doc\">$doc</a></h3>";
            	$lastdoc = $doc;
        	}
 		 
 		# Stuff content into a single-line paragraph
-		if ($content != "--") {
+		if  ($doc == $lastdoc) {
 			$para = $para . " ". $content;
 		}	
 
 		# Find instances of search query and highlight in red
 		# Search on all-lowercase, mixed case, and all-uppercase
-		if ( ($content == "--") || ($i == $last_element)) {
-			$content = $para;
+		if ( ($doc == $lastdoc) || ($i == $last_element)) {
+			$content  = $para;
 			$para = "";
 			# Remove \b from front and back of $query
 			$query = preg_replace("/\\\b/", "", $query);
@@ -169,20 +183,22 @@ if ($raw == "") {
 			}
 
 			# Display the content of the search
-        	print "<blockquote>$content</blockquote>";
+			if (!preg_match("/--/", $content) ) {
+				print "<blockquote>$content</blockquote>";
+			}
 		}
 		
 		#### Debug statements ####
 		# print "Query: $query - ". strlen($query). "</br></br>";
-        # print "$content</br></br>";
+		# print "Content: $content</br></br>";
 		# print "<p>Value = $value</p>";
-        # print "Ext = $ext\n";
-        # print "<p>Line = $line</p>";	
+		# print "<p>Line = $line</p>";	
 		# print "Doc = $doc \n";
-		# print "<p>Last = \$lastdoc</p>";
+		# print "<p>Last = $lastdoc</p>";
     }
 }
 ?>
 
 </body>
 </html>
+
