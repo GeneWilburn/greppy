@@ -1,12 +1,24 @@
 #!/usr/bin/perl
 
-## buildindex.pl
-## search site for all PDFs and HTML pages
-## excluding any directories in "exclude.txt"
-## and convert to text files in "search/texdata/" directory
+# buildindex.pl
 
-## G. Wilburn Feb/Mar 2022
-## gene@wilburn.ca
+# G. Wilburn, Feb/Mar 2022
+
+# v1.1
+
+# buildindex.pl searches a site for html and pdf documents, converts them to text, and
+# places all the text in a single search directory named "textdata" This provides the
+# data for the companion program, search.php
+#
+# buildindex.pl can be run manually or set up as a recurring cron job
+# It should be run after new material is added to a website
+#
+# buildindex.pl adds the mtime date to the beginning of each saved filename
+# which allows search.php to reverse sort the output, displaying the
+# most recently created or updated material at the top of the search results
+#
+# In order to protect private or privileged data, buildindex.pl checks for an
+# exclude.txt file for directories that should excluded from the data directory.
 
 
 use warnings;
@@ -16,15 +28,19 @@ use strict;
 # Clear out existing files in target directory
 my $ret = `rm search/textdata/*.txt`;
  
-
+# Load any directories to be excluded
 my @exclude = `cat search/exclude.txt`;
 chomp @exclude;
 
-# Get a files listing of PDFs and HTML pages
-my @filearray  = `find . -iname "*.pdf" -o -iname "*.htm*" `;
+# Get a files listing of PDFs and HTML pages and their datestamps
+my @webfiles = `find . -iname "*.pdf" -printf "%T@%p\n" -o -iname "*.htm*"  -printf "%T@%p\n"`;
 
 # Remove trailing linefeed or spaces
-chomp @filearray;
+chomp(@webfiles);
+
+# Sort then reverse sort the listing
+my @filearray = sort(@webfiles);
+@filearray = reverse(@filearray);
 
 # Set date on error log
 $ret = `date > search/textdata/build.log`;
@@ -32,50 +48,29 @@ $ret = `date > search/textdata/build.log`;
 # Iterate C-style for value AND array index number
 for (my $i = 0; $i <= $#filearray; $i++) {
 	my $file = $filearray[$i];
-
-	
-	# Preserve a copy of original extension
-	my $ext = "";
-	if ($file =~ m/.*.(pdf)$/) { $ext = "pdf--"; }
-	elsif ($file =~ m/.*.(PDF)$/) { $ext = "PDF--"; }
-	elsif ($file =~ m/.*.(html)$/) { $ext = "html--"; }
-	elsif ($file =~ m/.*.(htm)$/) { $ext = "htm--"; }
-	elsif ($file =~ m/.*.(HTML)$/) { $ext = "HTML--"; }
-
-
-	# create output file name with .txt extension
 	my $outfile = $file;
-	if ( $outfile =~ m/\.pdf$/) {
-		$outfile =~ s/\.pdf$/.txt/;
-	} elsif ( $outfile =~ m/\.PDF$/) {
-		$outfile =~ s/\.PDF$/.txt/;
-	} elsif ( $outfile =~ m/\.html/) {
-		$outfile =~ s/\.html$/.txt/;
-	} elsif ( $outfile =~ m/\.htm/) {
-		$outfile =~ s/\.htm$/.txt/;
-	} elsif ( $outfile =~ m/\.HTML/) {
-		$outfile =~ s/\.HTML$/.txt/;
-	}
+	# Strip datestamp from beginning of filename
+	$file =~ s/^..........\...........//;
 
-	# add backslash to all literal spaces in filename
-	$outfile =~ s/ /\\ /g;	
-	
-	# Add original extension to outfile name
-	$outfile = "\"" . $ext. $outfile . "\"";
-
-	# Perform the pdftotext conversion
-	my $yesno="yes";
+	# perform the pdftotext or pandoc conversion
+	my $allowed="yes";
 	foreach my $exclude (@exclude) {
-		if ($file =~ m/$exclude/) { $yesno="no"; }
+		# Check filename against excluded directories list
+		if ($file =~ m/$exclude/) {
+			$allowed="no";
+		}
 	}	
+		# Substitute benign characters for slashes and dots
 		$outfile =~ s/\//_99_/g;
-		$outfile =~ s/\./dot/;
+		$outfile =~ s/\./dot/g;
+		# add .txt extension
+		$outfile = $outfile . "\.txt";
+		# quote $outfile 
+		$outfile = "\"" . $outfile . "\"";
 
-	if ($yesno eq "yes") {
-		my $prefix = lc(substr($outfile,1,3));
-		# print "$prefix ";
-		if ( $prefix eq "pdf" ) {
-			#$file =~ s/^\.\///;
+	if ($allowed eq "yes") {
+		# if this is a PDF, process accordingly, else process as HTML
+		if ( $file =~ m/pdf$/i ) {
 			$file =~ s/ /\\ /g;
 			# perform the pdftotext conversion
 			$ret = `pdftotext $file - > search/textdata/$outfile 2>>search/textdata/build.log `;
@@ -84,11 +79,9 @@ for (my $i = 0; $i <= $#filearray; $i++) {
 			$ret = `pandoc -f html -t plain $file > search/textdata/$outfile 2>>search/textdata/build.log `;
 		}
 		$ret = `echo $file >> search/textdata/build.log`;
-		# Show activity on monitor
 		print ".";
 	
 		}
 }
 		print "\n";
 
-exit;
