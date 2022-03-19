@@ -2,12 +2,32 @@
 <html lang="en">
 <head>
     <title>Search Form</title>
-	<link rel="stylesheet" href="styles.css">
+<style>
+    h1 {
+            text-align: center;
+            font-family: Helvetica;
+            font-size: 30px;
+    }   
+
+
+    p { 
+            text-align: left;
+            font-family: Helvetica;
+            font-size: 24px;
+    }   
+    }   
+	button, input, select, textarea {
+  			font-family: Helvetica;
+  			font-size: 24px;;
+	}
+
+</style>
 </head>
 <body>
 <center>
 <h1>Search Form</h1>
 
+<font size="5">
  <form method="GET" action="search.php">
 <div>
    Search term or phrase: <input type="text" name="query"><br/>
@@ -26,7 +46,7 @@
 
 <br/><input type="submit" value="submit" >
 </form>
-
+</font>
 </center>
 </body>
 </html>
